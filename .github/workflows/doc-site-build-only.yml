@@ -24,7 +24,7 @@ jobs:
         scala:
           - { version: "2.13.18", binary-version: "2.13", java-version: "11", java-distribution: "temurin" }
         node:
-          - { version: "22.17.0" }
+          - { version: "24.12.0" }
 
     steps:
       - uses: actions/checkout@v6
@@ -55,6 +55,7 @@ jobs:
           ALGOLIA_INDEX_NAME: ${{ secrets.ALGOLIA_INDEX_NAME }}
           GA_TRACKING_ID: ${{ secrets.GA_TRACKING_ID }}
           GA_ANONYMIZE_IP: ${{ secrets.GA_ANONYMIZE_IP }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           JAVA_OPTS: ${{ env.GH_JAVA_OPTS }}
           JVM_OPTS: ${{ env.GH_JAVA_OPTS }}
           SBT_OPTS: ${{ env.GH_JAVA_OPTS }}
