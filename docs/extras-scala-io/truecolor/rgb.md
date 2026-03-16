@@ -244,6 +244,18 @@ import extras.scala.io.syntax.truecolor.rgb._
 "Hello".rgbed(0x10e0ff)
 ```
 
+
+`.dim` with true colors,
+```scala mdoc
+import extras.scala.io.syntax.color._ // for `.dim`
+import extras.scala.io.syntax.truecolor.rgb._
+
+println("Hello".rgbed(0x00eeff).dim)
+```
+
+![Dim True Color Example 4](/img/docs/extras-scala-io/dim-true-colors-resized.png)
+
+
 ### Invalid RGB Value Handling
 In `.rgb(Int)` and `.rgbed(Int)` syntax,
  * If the given RGB `Int` value is less than `0` (`0x000000`), it uses `0` (`0x000000`).
