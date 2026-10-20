@@ -3,6 +3,7 @@
 import {themes as prismThemes} from 'prism-react-renderer';
 import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
+import releaseNotesPlugin from './plugins/release-notes';
 
 const algoliaConfig = require('./algolia.config.json');
 const googleAnalyticsConfig = require('./google-analytics.config.json');
@@ -47,6 +48,10 @@ const websiteConfig = {
     ],
   ],
 
+  plugins: [
+    [releaseNotesPlugin, { repoUrl: 'https://github.com/kevin-lee/extras' }],
+  ],
+
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
@@ -71,6 +76,11 @@ const websiteConfig = {
             label: 'Docs',
           },
           {
+            to: '/release-notes',
+            label: 'Release Notes',
+            position: 'left',
+          },
+          {
             href: 'https://github.com/kevin-lee/extras',
             label: 'GitHub',
             position: 'right',
@@ -86,6 +96,10 @@ const websiteConfig = {
               {
                 label: 'Docs',
                 to: '/docs/',
+              },
+              {
+                label: 'Release Notes',
+                to: '/release-notes',
               },
             ],
           },

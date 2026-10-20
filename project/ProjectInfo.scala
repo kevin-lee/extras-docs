@@ -173,6 +173,95 @@ object ProjectInfo {
       IO.write(versionsArchivedFile, versionsInJson)
     }
 
+    def writeReleases(websiteDir: File)(implicit logger: Logger): Unit = {
+      val (ghVersionExit, ghVersionOut, ghVersionErr) = CmdRun.runAndCapture(Seq("gh", "--version"))
+      if (ghVersionExit != 0)
+        CmdRun.fail("writeReleases", "gh --version", Seq("gh", "--version"), ghVersionOut, ghVersionErr)(
+          logger.error(_)
+        )
+
+      val (ghAuthExit, ghAuthOut, ghAuthErr) =
+        CmdRun.runAndCapture(Seq("gh", "auth", "status", "-h", "github.com"))
+      if (ghAuthExit != 0)
+        CmdRun.fail(
+          "writeReleases",
+          "gh auth status",
+          Seq("gh", "auth", "status", "-h", "github.com"),
+          ghAuthOut,
+          ghAuthErr,
+        )(logger.error(_))
+
+      val repo = s"${props.GitHubUser}/${props.CodeRepoName}"
+
+      /* One line for each non-draft release: tag name, TAB, then the release as a compact JSON object. */
+      val releaseLineJq =
+        """.[] | select(.draft | not) | "\(.tag_name)\t\({tagName: .tag_name, name: .name, publishedAt: .published_at, htmlUrl: .html_url, prerelease: .prerelease, body: (.body // "")} | tojson)""""
+
+      val ghReleasesCmd =
+        Seq(
+          "gh",
+          "api",
+          "-H",
+          "Accept: application/vnd.github+json",
+          s"/repos/$repo/releases",
+          "--paginate",
+          "-q",
+          releaseLineJq,
+        )
+
+      val (releasesExit, releasesOut, releasesErr) = CmdRun.runAndCapture(ghReleasesCmd)
+      if (releasesExit != 0)
+        CmdRun.fail("writeReleases", "gh api releases", ghReleasesCmd, releasesOut, releasesErr)(logger.error(_))
+
+      val releases = releasesOut
+        .split("\n")
+        .map(_.trim)
+        .filter(_.nonEmpty)
+        .toList
+        .flatMap { line =>
+          val (tagName, releaseJson) = line.splitAt(line.indexOf('\t'))
+          val semVer                 =
+            if (tagName.startsWith("v")) SemVer.parse(tagName.stripPrefix("v")).toOption
+            else None
+          semVer match {
+            case Some(v) =>
+              List(v -> releaseJson.drop(1))
+            case None =>
+              logger.warn(s">> [writeReleases] Skip the release with an invalid tag name: ${tagName.yellow}")
+              List.empty
+          }
+        }
+        .sortBy(_._1)(Ordering[SemVer].reverse)
+        .map(_._2)
+
+      val releasesFile = websiteDir / "releases.json"
+      val releasesJson =
+        if (releases.isEmpty) "[]"
+        else releases.mkString("[\n", ",\n", "\n]")
+
+      val websiteDirRelativePath =
+        s"${releasesFile.getParentFile.getParentFile.getName.cyan}/${releasesFile.getParentFile.getName.yellow}"
+      logger.info(
+        s""">> Writing ${releases.length.toString.blue} ${"releases".blue} to $websiteDirRelativePath/${releasesFile.getName.green}."""
+      )
+      IO.write(releasesFile, releasesJson)
+    }
+
+    def writeNoReleases(websiteDir: File)(implicit logger: Logger): Unit = {
+      val releasesFile         = websiteDir / "releases.json"
+      val latestVersionFile    = websiteDir / "latestVersion.json"
+      val versionsArchivedFile = websiteDir / "src" / "pages" / "versionsArchived.json"
+
+      logger.info(
+        s""">> Writing ${"empty release data".blue} (${"no release".yellow}) to
+           |>>   ${releasesFile.getName.green}, ${latestVersionFile.getName.green} and ${versionsArchivedFile.getName.green}.
+           |""".stripMargin
+      )
+      IO.write(releasesFile, "[]")
+      IO.write(latestVersionFile, raw"""{"version":null}""")
+      IO.write(versionsArchivedFile, "[]")
+    }
+
     def createMdocVariables(version: String): Map[String, String] = {
       val versionForDoc                  = version
       Map(
