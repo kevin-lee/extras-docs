@@ -73,15 +73,18 @@ lazy val docs = (project in file("docs-gen-tmp/docs"))
       envVarCi match {
         case Some("true") =>
           logger.info(
-            s">> ${ciResult.yellow} so ${"run".green} `${"writeLatestVersion".blue}` and `${"writeVersionsArchived".blue}`."
+            s">> ${ciResult.yellow} so ${"run".green} `${"writeLatestVersion".blue}`, `${"writeVersionsArchived".blue}` and `${"writeReleases".blue}`."
           )
           val websiteDir = docusaurDir.value
           docsTools.writeLatestVersion(websiteDir, latestVersion)
           docsTools.writeVersionsArchived(websiteDir, latestVersion)(logger)
+          docsTools.writeReleases(websiteDir)
         case Some(_) | None =>
           logger.info(
-            s">> ${ciResult.yellow} so it will ${"not run".red} `${"writeLatestVersion".cyan}` and `${"writeVersionsArchived".cyan}`."
+            s">> ${ciResult.yellow} so it will ${"not run".red} `${"writeLatestVersion".cyan}`, `${"writeVersionsArchived".cyan}` and `${"writeReleases".cyan}`, and it writes ${"empty release data".cyan} (${"no release".yellow})."
           )
+          val websiteDir = docusaurDir.value
+          docsTools.writeNoReleases(websiteDir)
       }
       mdoc.evaluated
     },

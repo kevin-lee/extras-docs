@@ -23,4 +23,5 @@ package-lock.json
 
 /versioned_docs
 /latestVersion.json
+/releases.json
 /src/pages/versionsArchived.json
